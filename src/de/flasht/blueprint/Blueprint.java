@@ -1,6 +1,5 @@
 package de.flasht.blueprint;
 
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.bukkit.Location;
