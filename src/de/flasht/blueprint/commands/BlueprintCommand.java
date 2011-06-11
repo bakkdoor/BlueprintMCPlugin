@@ -3,7 +3,9 @@ package de.flasht.blueprint.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
+import de.flasht.blueprint.BlueprintManager;
 import de.flasht.blueprint.BlueprintPlugin;
 
 public class BlueprintCommand implements CommandExecutor {
@@ -29,12 +31,14 @@ public class BlueprintCommand implements CommandExecutor {
 	
 	private boolean startBlueprint(CommandSender sender)
 	{
+		BlueprintManager.startBlueprintMode((Player) sender);
 		sender.sendMessage("Blueprint mode enabled.");
 		return true;		
 	}
 
 	private boolean endBlueprint(CommandSender sender)
 	{
+		BlueprintManager.endBlueprintMode((Player)sender);
 		sender.sendMessage("Blueprint mode disabled.");
 		return true;
 	}

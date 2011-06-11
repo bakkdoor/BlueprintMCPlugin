@@ -16,7 +16,6 @@ public class BPBlockListener extends BlockListener {
     private final BlueprintPlugin plugin;
     
     private Location startLoc;
-    private Blueprint blueprint;
 
     public BPBlockListener(final BlueprintPlugin plugin) {
         this.plugin = plugin;
@@ -26,31 +25,35 @@ public class BPBlockListener extends BlockListener {
     public void onBlockPlace(BlockPlaceEvent event)
     {
     	Material mat = event.getBlockPlaced().getType();
-    	
     	Location loc = event.getBlockPlaced().getLocation();
-    	
     	Player p = event.getPlayer();
     	
-    	
-    	if(mat == Material.TORCH)
-    		if(startLoc == null)
-    		{
-    			startLoc = loc;
-    			p.sendMessage("start location set");
-    		}
-    		else  
-    		{
-    			p.sendMessage("drawing blueprint..");
-    			blueprint = new Blueprint(this.plugin, startLoc, loc);
-    			p.sendMessage("done!");
-    			startLoc = null;
-    		}
-    	else if(mat == Material.REDSTONE_TORCH_ON)
+    	if(BlueprintManager.isPlayerInBlueprintMode(p))
     	{
-			p.sendMessage("building blueprint..");
-    		blueprint.placeBlocks(p, loc);
-			p.sendMessage("done!");
+    		if(mat == Material.TORCH)
+    		{
+    			if(startLoc == null)
+    			{
+    				startLoc = loc;
+    				p.sendMessage("Start location set");
+    			}
+    			else  
+    			{
+    				p.sendMessage("Drawing blueprint..");
+    				BlueprintManager.createBlueprint(event.getPlayer(), this.plugin, this.startLoc, loc);
+    				p.sendMessage("done!");
+    				startLoc = null;
+    			}
+    		}
+    	} else {
+    		if(mat == Material.REDSTONE_TORCH_ON)
+    		{
+    			p.sendMessage("Building blueprint..");
+    			if(BlueprintManager.getBlueprint(p).placeBlocks(p, loc))
+    			{
+    				p.sendMessage("Success!");
+    			}
+    		}
     	}
-    		
     }
 }
