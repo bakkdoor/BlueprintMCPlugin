@@ -14,6 +14,4 @@ public class BPPlayerListener extends PlayerListener {
     public BPPlayerListener(BlueprintPlugin instance) {
         plugin = instance;
     }
-
-    //Insert Player related code here
 }

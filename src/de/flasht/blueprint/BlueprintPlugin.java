@@ -8,6 +8,8 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 
+import de.flasht.blueprint.commands.BlueprintCommand;
+
 /**
  * Sample plugin for Bukkit
  *
@@ -18,37 +20,25 @@ public class BlueprintPlugin extends JavaPlugin {
     private final BPBlockListener blockListener = new BPBlockListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
 
-    // NOTE: There should be no need to define a constructor any more for more info on moving from
-    // the old constructor see:
-    // http://forums.bukkit.org/threads/too-long-constructor.5032/
-
     public void onDisable() {
-        // TODO: Place any custom disable code here
-
-        // NOTE: All registered events are automatically unregistered when a plugin is disabled
-
-        // EXAMPLE: Custom code, here we just output some info so we can check all is well
-        System.out.println("Goodbye world!");
+        System.out.println("Blueprint plugin disabled.");
     }
 
     public void onEnable() {
-        // TODO: Place any custom enable code here including the registration of any events
-
         // Register our events
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
+        
 //        pm.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Priority.Normal, this);
 //        pm.registerEvent(Event.Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
 //        pm.registerEvent(Event.Type.PLAYER_MOVE, playerListener, Priority.Normal, this);
 //        pm.registerEvent(Event.Type.BLOCK_CANBUILD, blockListener, Priority.Normal, this);
 
         // Register our commands
-//        getCommand("pos").setExecutor(new SamplePosCommand(this));
-//        getCommand("debug").setExecutor(new SampleDebugCommand(this));
+        getCommand("blueprint").setExecutor(new BlueprintCommand(this));
 
-        // EXAMPLE: Custom code, here we just output some info so we can check all is well
         PluginDescriptionFile pdfFile = this.getDescription();
-        System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
+        System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " enabled.");
     }
 
     public boolean isDebugging(final Player player) {

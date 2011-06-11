@@ -8,7 +8,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public class Blueprint {
-
 	protected Material[][][] blocks;
 	protected int sx,sy,sz,ex,ez,dx,dz;
 	protected int height;
@@ -19,7 +18,7 @@ public class Blueprint {
 	public Blueprint(BlueprintPlugin plugin, Location begin, Location end)
 	{		
 		this.plugin = plugin;
-		log = plugin.getServer().getLogger();
+		this.log = plugin.getServer().getLogger();
 		
 		sx = (int)Math.min(begin.getX(), end.getX());
 		sy = (int)Math.max(begin.getY(), end.getY());
@@ -29,7 +28,6 @@ public class Blueprint {
 
 		dx = Math.abs(ex-sx) +1;
 		dz = Math.abs(ez-sz) +1;
-		
 		blocks = new Material[dx][128][dz];
 		
 		updateBlocks(begin.getWorld());
@@ -38,7 +36,6 @@ public class Blueprint {
 	protected void updateBlocks(World world)
 	{
 		boolean empty = false;
-		
 		height = -1;
 		
 		for(int y = 0; !empty && y+sy < 128; y++)
@@ -47,7 +44,8 @@ public class Blueprint {
 			height ++;
 			log.info("y="+y);
 			
-			for(int x = 0; x < dx; x++) {
+			for(int x = 0; x < dx; x++)
+			{
 				log.info("x="+x);
 				for(int z = 0; z < dz; z++)
 				{
@@ -55,7 +53,6 @@ public class Blueprint {
 					Material mat = 
 						world.getBlockAt(new Location(world,sx+x,sy+y,sz+z)).getType();
 					blocks[x][y][z] = mat;
-					
 					empty &= (mat == Material.AIR);
 				}
 			}
@@ -65,7 +62,6 @@ public class Blueprint {
 	public void placeBlocks(Player p, Location loc)
 	{
 		World world = loc.getWorld();
-		
 		log.info(dx + ", " + sy + ", " + dz + ", " + height);
 		
 		for(int y = 0; y < height; y++)

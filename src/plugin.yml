@@ -1,0 +1,8 @@
+name: Blueprint
+main: de.flasht.blueprint.BlueprintPlugin
+version: 0.0.1
+
+commands:
+    blueprint:
+        description: Start/Stop building blueprint.
+        usage: /blueprint <start|stop>
