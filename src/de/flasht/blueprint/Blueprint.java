@@ -1,112 +1,215 @@
 package de.flasht.blueprint;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 
 public class Blueprint {
+
+	protected final static int MAP_HEIGHT = 128;
+	protected final static int MAX_BLOCK_COUNT = 4000; // max for default server config
+
+	protected HashMap<Material, Integer> buildingMaterial;
 	protected Material[][][] blocks;
-	protected int sx,sy,sz,ex,ez,dx,dz;
 	protected int height;
 	protected BlueprintPlugin plugin;
 	protected Logger log;
+	protected boolean buildToTheLeft;
 	
-	public Blueprint(BlueprintPlugin plugin, Location begin, Location end)
+	
+	public Blueprint(BlueprintPlugin plugin, Location begin, Location end, boolean faceXAxis)
 	{		
+		// faceXAxis == false => face Z Axis
+		
 		this.plugin = plugin;
-		this.log = plugin.getServer().getLogger();
+		log = plugin.getServer().getLogger();
+		buildingMaterial = new HashMap<Material, Integer>();
 		
-		sx = (int)Math.min(begin.getX(), end.getX());
-		sy = (int)Math.max(begin.getY(), end.getY());
-		sz = (int)Math.min(begin.getZ(), end.getZ());
-		ex = (int)Math.max(begin.getX(), end.getX());
-		ez = (int)Math.max(begin.getZ(), end.getZ());
-
-		dx = Math.abs(ex-sx) +1;
-		dz = Math.abs(ez-sz) +1;
-		blocks = new Material[dx][128][dz];
+		int sx = (int)begin.getX();
+		int sy = (int)Math.max(begin.getY(), end.getY());
+		int sz = (int)begin.getZ();
+		int ex = (int)end.getX();
+		int ez = (int)end.getZ();
 		
-		updateBlocks(begin.getWorld());
+		updateBlocks(begin.getWorld(), sx, sy, sz, ex, ez, faceXAxis);
 	}
 	
-	protected void updateBlocks(World world)
+	protected void updateBlocks(World world, int sx, int sy, int sz, int ex, int ez, boolean faceXAxis)
 	{
-		boolean empty = false;
-		height = -1;
+		// faceXAxis == false => face Z Axis
+		// determine orientation
+
+		int dx = Math.abs(ex-sx);
+		int dz = Math.abs(ez-sz);
+
+		boolean decX = ex < sx;
+		boolean decZ = ez < sz;
 		
-		for(int y = 0; !empty && y+sy < 128; y++)
+		buildToTheLeft = decX ^ decZ ? faceXAxis : !faceXAxis ;
+		
+		log.info("dx=" + dx +", dz=" + dz);
+		
+		if(faceXAxis)
+		    blocks = new Material[dx+1][MAP_HEIGHT][dz+1];
+		else
+			blocks = new Material[dz+1][MAP_HEIGHT][dx+1];
+
+		
+		log.info("updating blocks..");
+		log.info("faceXAxis=" + faceXAxis + ", buildToTheLeft=" + buildToTheLeft);
+		
+		int blockCount = 0;
+		boolean empty = false;
+		buildingMaterial.clear();
+		
+		for(height = 0; !empty && height+sy < 128; height++)
 		{
 			empty = true;
-			height ++;
-			log.info("y="+y);
+//			log.info("y=" + height);
 			
-			for(int x = 0; x < dx; x++)
+			for(int x = 0; x <= dx; x++)
 			{
-				log.info("x="+x);
-				for(int z = 0; z < dz; z++)
+				int curX = decX ? sx-x : sx+x;
+//				log.info("  x=" + x);
+				for(int z = 0; z <= dz; z++)
 				{
-					log.info("z="+z);
-					Material mat = 
-						world.getBlockAt(new Location(world,sx+x,sy+y,sz+z)).getType();
-					blocks[x][y][z] = mat;
-					empty &= (mat == Material.AIR);
-				}
-			}
-		}
-	}
-	
-	private boolean canBuildAt(World world, double x, double y, double z)
-	{
-		return world.getBlockAt(new Location(world, x, y, z)).getType() == Material.AIR;
-	}
-	
-	private boolean canPlaceBlocks(World world, Location loc)
-	{
-		// TODO: Fix this method. Doesn't work correctly yet.
-//		for(int x = 0; x < dx; x++)
-//		{
-//			for(int y = 0; y < height; y++)
-//			{
-//				for(int z = 0; z < dz; z++)
-//				{
-//					if(!canBuildAt(world, loc.getX() + x, loc.getY() + y, loc.getZ() + z))
-//						return false;
-//				}
-//			}
-//		}
-		return true;
-	}
-	
-	public boolean placeBlocks(Player p, Location loc)
-	{
-		if(canPlaceBlocks(loc.getWorld(), loc))
-		{
-			p.sendMessage("Starting to build from blueprint...");
-			World world = loc.getWorld();
-			log.info(dx + ", " + sy + ", " + dz + ", " + height);
-			
-			for(int y = 0; y < height; y++)
-			{
-				log.info("y=" + y);
-				for(int x = 0; x < dx; x++)
-				{
-					log.info("x=" + x +", y=" + y);
-					for(int z = 0; z < dz; z++)
+//					log.info("    z=" + z);
+					int curZ = decZ ? sz-z : sz+z;
+					Location curLoc = new Location(world, curX, sy+height, curZ);
+					Material mat = world.getBlockAt(curLoc).getType();
+
+					int u = faceXAxis? x : z;
+					int v = faceXAxis? z : x;
+					blocks[u][height][v] = mat;
+					
+					if(mat != Material.AIR)
 					{
-						log.info("x=" + x +", y=" + y + ", z=" + z);
-						world.getBlockAt(new Location(world, loc.getX()+x, loc.getY()+y, loc.getZ()+z))
-							.setType(blocks[x][y][z]);
+						empty = false;
+						Integer mc = buildingMaterial.get(mat);
+						mc = mc == null ? 0 : mc;
+						buildingMaterial.put(mat, v+1);
+						blockCount++;
+						if(blockCount > MAX_BLOCK_COUNT)
+							throw new RuntimeException("too many blocks for blueprint!");
 					}
 				}
 			}
-			return true;
-		} else {
-			p.sendMessage("Can't build from blueprint: Need empty space.");
-			return false;
 		}
+		height--;
+		log.info("blueprint updated:");
+		
+		// print overview of first layer of blueprint
+		for(int u = blocks.length-1; u >= 0; u--)
+		{
+			String line = "[UV-FIELD] ";
+			for(int v = 0; v < blocks[u][0].length; v++)
+				line += blocks[u][0][v] == Material.AIR ? " " : "X";
+			log.info(line);
+		}
+		
+		log.info("    height: " + height);
+		log.info("    number of blocks: " +blockCount);
+	}
+	
+	public Map<Material, Integer> placeBlocks(Location loc, BlockFace orientation)
+	{
+		log.info("placing blocks..");
+		
+		int sDu = 0;
+		int sDv = 0;
+		
+		boolean mapUtoX = true; // else map U to Y
+		
+		// transform uv-coordinates to xz
+		switch(orientation)
+		{
+			case NORTH:
+				sDu = -1;
+				sDv = -1;
+				break;
+			case SOUTH:
+				sDu =  1;
+				sDv =  1;
+				break;
+			case EAST:
+				sDu = -1;
+				sDv =  1;
+				mapUtoX = false;
+				break;
+			case WEST:
+				sDu =  1;
+				sDv = -1;
+				mapUtoX = false;
+				break;
+			default:
+				log.info("invalid orientation given!");
+				throw new RuntimeException("invalid orientation given!");
+		}
+		if(buildToTheLeft)
+			sDv *= -1;
+		
+		log.info("material to be placed:");
+		for(Map.Entry<Material, Integer> entry : buildingMaterial.entrySet())
+			log.info("    " + entry.getKey() + ": " + entry.getValue());
+		
+		log.info("sDu=" + sDu + ", sDv=" + sDv + ", mapUtoX=" + mapUtoX);
+		
+		World world = loc.getWorld();
+		
+		boolean blockCreated = true;
+		int blockCount = 0;
+		HashMap<Material, Integer> result = new HashMap<Material, Integer>();
+		
+		for(int y = 0; y <= height && blockCreated; y++)
+		{
+//			log.info("y="+y);
+			blockCreated = false;
+			
+			for(int u = 0; u < blocks.length; u++)
+			{
+//				log.info("  u="+u);
+				for(int v = 0; v < blocks[u][y].length; v++)
+				{
+//					log.info("    v=" + v);
+					Location curLoc;
+					int dx, dz;
+					
+					// further transformation
+					if(mapUtoX)
+					{
+						dx = u*sDu;
+						dz = v*sDv;
+					}
+					else
+					{
+						dx = v*sDv;
+						dz = u*sDu;
+					}
+					curLoc = new Location(world, loc.getX()+dx, loc.getY()+y, loc.getZ()+dz);
+
+					Block b = world.getBlockAt(curLoc);
+					
+					Material mat = b.getType();
+					if(mat == Material.AIR && blocks[u][y][v] != Material.AIR)
+					{
+						log.info("setting block: " + blocks[u][y][v]);
+						b.setType(blocks[u][y][v]);
+						blockCreated = true;
+						blockCount++;
+						Integer mc = result.get(mat);
+						mc = (mc == null) ? 0 : mc;
+						result.put(mat,  mc+1);
+					}
+				}
+			}
+		}		
+		log.info(blockCount + " blocks placed!");
+		return result;
 	}
 }
