@@ -9,6 +9,7 @@ import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.util.Vector;
 import org.bukkit.block.Chest;
 
 
@@ -28,8 +29,8 @@ public class BPBlockListener extends BlockListener {
     	Location loc = event.getBlockPlaced().getLocation();
     	Player p = event.getPlayer();
     	
-    	if(BlueprintManager.isPlayerInBlueprintMode(p))
-    	{
+//    	if(BlueprintManager.isPlayerInBlueprintMode(p))
+//    	{
     		if(mat == Material.TORCH)
     		{
     			if(startLoc == null)
@@ -45,15 +46,28 @@ public class BPBlockListener extends BlockListener {
     				startLoc = null;
     			}
     		}
-    	} else {
+//    	} else {
     		if(mat == Material.REDSTONE_TORCH_ON)
     		{
     			p.sendMessage("Building blueprint..");
-    			if(BlueprintManager.getBlueprint(p).placeBlocks(p, loc))
-    			{
-    				p.sendMessage("Success!");
-    			}
+    			BlockFace orientation;
+    			Vector d = p.getLocation().getDirection();
+    			if(Math.abs(d.getX()) > Math.abs(d.getZ()))
+    				if(d.getX() > 0)
+    					orientation = BlockFace.SOUTH;
+    				else
+    					orientation = BlockFace.NORTH;
+    			else
+    				if(d.getZ() > 0)
+    					orientation = BlockFace.WEST;
+    				else
+    					orientation = BlockFace.EAST;
+    					
+    			p.sendMessage("direction = " + d);
+    			p.sendMessage("orientation = " + orientation);
+    		
+    			BlueprintManager.getBlueprint(p).placeBlocks(loc, orientation);
     		}
-    	}
+//    	}
     }
 }

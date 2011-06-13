@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 public class BlueprintManager {
 	protected static HashMap<Player, Blueprint> currentBlueprints = new HashMap<Player, Blueprint>();
@@ -28,7 +29,9 @@ public class BlueprintManager {
 	
 	public static Blueprint createBlueprint(Player player, BlueprintPlugin plugin, Location begin, Location end)
 	{
-		Blueprint bp = new Blueprint(plugin, begin, end);
+		Vector direction = player.getLocation().getDirection();
+		boolean xAxis = direction.getX() > direction.getZ();
+		Blueprint bp = new Blueprint(plugin, begin, end, xAxis);
 		currentBlueprints.put(player, bp);
 		return bp;
 	}
